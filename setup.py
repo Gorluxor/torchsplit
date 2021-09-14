@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
         name="torchsplit",
-        version="0.0.1",
+        version="0.0.3",
         packages=find_packages(),
         description="A basic implementation to split labled data",
         long_description=long_description,

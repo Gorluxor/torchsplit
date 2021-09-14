@@ -57,7 +57,7 @@ def train_test_validation_split_with_equal_classes(dataset: torch.utils.data.Dat
   #trainset = datasets.ImageFolder(root=root,
   #                                transform=transforms)
   try:
-    targets = dataset.__getattr__(label_name)
+    targets = dataset.__getattribute__(label_name)
   except:
     raise Exception(f"Provided dataset doesn't have .targets implemented")
   # target array
