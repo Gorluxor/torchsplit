@@ -5,9 +5,9 @@ with open("README.md", "r") as fh:
 
 setup(
         name="torchsplit",
-        version="0.1.0",
+        version="0.0.1",
         packages=find_packages(),
-        description="Save contacts from your terminal",
+        description="A basic implementation to split labled data",
         long_description=long_description,
         long_description_content_type="text/markdown",
         url="https://github.com/Gorluxor/torchsplit",
