@@ -37,7 +37,8 @@ def train_test_validation_split_with_equal_classes(dataset: torch.utils.data.Dat
                                                    batch_size: int = 16,
                                                    num_workers: int = 16,
                                                    other_split: float = 0.2, 
-                                                   validation_split: float = 0.5):
+                                                   validation_split: float = 0.5, 
+                                                   shuffle: bool = False):
   """ Generate train, test and validation datasets and dataloaders for Pytorch ImageFolder dataset. Method relies on sklearn and pytorch. 
 
   Args:
@@ -48,7 +49,7 @@ def train_test_validation_split_with_equal_classes(dataset: torch.utils.data.Dat
       num_workers (int, optional): Number of workers for dataloaders. Defaults to 16.
       other_split (float, optional): How much to split for test and validation. Defaults to 0.2.
       validation_split (float, optional): How much to split from other_split into validation set. Defaults to 0.5.
-      shuffle (bool, optional): To shuffle data while spliiting. Defaults to True.
+      shuffle (bool, optional): To shuffle data for DataLoaders. Defaults to False.
 
   Returns:
       Tuple(Dict[str, torch.utils.data.Subset], Dict[str, torch.utils.data.DataLoader]): 
@@ -95,11 +96,13 @@ def train_test_validation_split_with_equal_classes(dataset: torch.utils.data.Dat
   test_sampler = SubsetRandomSampler(other_idx[test_idx])
   valid_sampler = SubsetRandomSampler(other_idx[valid_idx])
 
-  trainloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, sampler=train_sampler, num_workers=num_workers)
-  validloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, sampler=valid_sampler, num_workers=num_workers)
-  testloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, sampler=test_sampler, num_workers=num_workers)
-
   data_dict = {'train' : Subset(dataset, train_idx), 'valid' : Subset(dataset, other_idx[valid_idx]), 'test': Subset(dataset, other_idx[valid_idx])}
+  
+  trainloader = torch.utils.data.DataLoader(data_dict['train'], batch_size=batch_size, num_workers=num_workers, shuffle=shuffle)
+  validloader = torch.utils.data.DataLoader(data_dict['valid'], batch_size=batch_size, num_workers=num_workers, shuffle=shuffle)
+  testloader = torch.utils.data.DataLoader(data_dict['test'], batch_size=batch_size, num_workers=num_workers, shuffle=shuffle)
+
+  
   loader_dict = {'train': trainloader, 'valid': validloader, 'test':testloader}
   
   return data_dict, loader_dict
