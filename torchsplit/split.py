@@ -38,9 +38,11 @@ def train_test_validation_split_with_equal_classes(dataset: torch.utils.data.Dat
                                                    num_workers: int = 16,
                                                    other_split: float = 0.2, 
                                                    validation_split: float = 0.5, 
-                                                   shuffle: bool = False):
+                                                   shuffle: bool = False, 
+                                                   use_sampler: bool = False, 
+                                                   pin_memory:bool = True):
   """ Generate train, test and validation datasets and dataloaders for Pytorch ImageFolder dataset. Method relies on sklearn and pytorch. 
-
+  If using multiple image dimensions per class, must use transforms.Resize((img_size, img_size)) or else the DataLoaders will return a error.
   Args:
       root (str, optional): Location of ImageFolder dataset. Defaults to './content/Multimini-dataset'.
       transforms (transforms.Compose, optional): List of trnasforms. Defaults to transform_original.
@@ -50,7 +52,8 @@ def train_test_validation_split_with_equal_classes(dataset: torch.utils.data.Dat
       other_split (float, optional): How much to split for test and validation. Defaults to 0.2.
       validation_split (float, optional): How much to split from other_split into validation set. Defaults to 0.5.
       shuffle (bool, optional): To shuffle data for DataLoaders. Defaults to False.
-
+      use_sampler (bool, optional): To directly use data_dict in DataLoaders or use SubRandomSampler. Defaults to False.
+      pin_memory (bool, optional): Used when GPUs are used. Defaults to True.
   Returns:
       Tuple(Dict[str, torch.utils.data.Subset], Dict[str, torch.utils.data.DataLoader]): 
       Returns dict of split subsets and dict of split dataloaders
@@ -91,16 +94,22 @@ def train_test_validation_split_with_equal_classes(dataset: torch.utils.data.Dat
     print_num_classes(numpified, train_idx)
     print_num_classes(numpified, other_idx[valid_idx], name_of_set='valid')
     print_num_classes(numpified, other_idx[test_idx], name_of_set='test')
-
-  train_sampler = SubsetRandomSampler(train_idx)
-  test_sampler = SubsetRandomSampler(other_idx[test_idx])
-  valid_sampler = SubsetRandomSampler(other_idx[valid_idx])
+  if use_sampler:
+    train_sampler = SubsetRandomSampler(train_idx)
+    test_sampler = SubsetRandomSampler(other_idx[test_idx])
+    valid_sampler = SubsetRandomSampler(other_idx[valid_idx])
 
   data_dict = {'train' : Subset(dataset, train_idx), 'valid' : Subset(dataset, other_idx[valid_idx]), 'test': Subset(dataset, other_idx[valid_idx])}
   
-  trainloader = torch.utils.data.DataLoader(data_dict['train'], batch_size=batch_size, num_workers=num_workers, shuffle=shuffle)
-  validloader = torch.utils.data.DataLoader(data_dict['valid'], batch_size=batch_size, num_workers=num_workers, shuffle=shuffle)
-  testloader = torch.utils.data.DataLoader(data_dict['test'], batch_size=batch_size, num_workers=num_workers, shuffle=shuffle)
+  from torch.utils.data import DataLoader
+  if use_sampler:
+    trainloader = DataLoader(data_dict['train'], batch_size=batch_size, num_workers=num_workers, sampler=train_sampler, shuffle=shuffle, pin_memory=pin_memory)
+    validloader = DataLoader(data_dict['valid'], batch_size=batch_size, num_workers=num_workers, sampler=valid_sampler, shuffle=shuffle, pin_memory=pin_memory)
+    testloader = DataLoader(data_dict['test'], batch_size=batch_size, num_workers=num_workers, sampler=test_sampler, shuffle=shuffle, pin_memory=pin_memory)
+  else:
+    trainloader = DataLoader(data_dict['train'], batch_size=batch_size, num_workers=num_workers, shuffle=shuffle)
+    validloader = DataLoader(data_dict['valid'], batch_size=batch_size, num_workers=num_workers, shuffle=shuffle)
+    testloader = DataLoader(data_dict['test'], batch_size=batch_size, num_workers=num_workers, shuffle=shuffle)
 
   
   loader_dict = {'train': trainloader, 'valid': validloader, 'test':testloader}
