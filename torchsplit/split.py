@@ -92,26 +92,17 @@ def train_test_validation_split_with_equal_classes(dataset: torch.utils.data.Dat
   if (verbose):
     numpified = np.array(targets)
     print_num_classes(numpified, train_idx)
-    print_num_classes(numpified, other_idx[valid_idx], name_of_set='valid')
+    print_num_classes(numpified, other_idx[valid_idx], name_of_set='val')
     print_num_classes(numpified, other_idx[test_idx], name_of_set='test')
   if use_sampler:
-    train_sampler = SubsetRandomSampler(train_idx)
-    test_sampler = SubsetRandomSampler(other_idx[test_idx])
-    valid_sampler = SubsetRandomSampler(other_idx[valid_idx])
+    samplers = {'train': SubsetRandomSampler(train_idx),
+                'val': SubsetRandomSampler(other_idx[test_idx]),
+                'test': SubsetRandomSampler(other_idx[valid_idx])}
 
-  data_dict = {'train' : Subset(dataset, train_idx), 'valid' : Subset(dataset, other_idx[valid_idx]), 'test': Subset(dataset, other_idx[valid_idx])}
+  data_dict = {'train' : Subset(dataset, train_idx), 'val': Subset(dataset, other_idx[valid_idx]), 'test': Subset(dataset, other_idx[valid_idx])}
   
   from torch.utils.data import DataLoader
-  if use_sampler:
-    trainloader = DataLoader(data_dict['train'], batch_size=batch_size, num_workers=num_workers, sampler=train_sampler, shuffle=shuffle, pin_memory=pin_memory)
-    validloader = DataLoader(data_dict['valid'], batch_size=batch_size, num_workers=num_workers, sampler=valid_sampler, shuffle=shuffle, pin_memory=pin_memory)
-    testloader = DataLoader(data_dict['test'], batch_size=batch_size, num_workers=num_workers, sampler=test_sampler, shuffle=shuffle, pin_memory=pin_memory)
-  else:
-    trainloader = DataLoader(data_dict['train'], batch_size=batch_size, num_workers=num_workers, shuffle=shuffle)
-    validloader = DataLoader(data_dict['valid'], batch_size=batch_size, num_workers=num_workers, shuffle=shuffle)
-    testloader = DataLoader(data_dict['test'], batch_size=batch_size, num_workers=num_workers, shuffle=shuffle)
 
-  
-  loader_dict = {'train': trainloader, 'valid': validloader, 'test':testloader}
-  
+  loader_dict = {x: DataLoader(data_dict[x] if not use_sampler else dataset, batch_size=batch_size, num_workers=num_workers, sampler=samplers[x] if use_sampler else None, shuffle=shuffle, pin_memory=pin_memory) for x in ['train', 'val', 'test']}
+
   return data_dict, loader_dict
