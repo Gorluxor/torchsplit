@@ -41,7 +41,8 @@ def train_test_validation_split_with_equal_classes(dataset: torch.utils.data.Dat
                                                    shuffle: bool = False, 
                                                    use_sampler: bool = False, 
                                                    pin_memory:bool = True, 
-                                                   always_return_subsets: bool = False):
+                                                   always_return_subsets: bool = False,
+                                                   drop_last:bool = True):
   """ Generate train, test and validation datasets and dataloaders for Pytorch ImageFolder dataset. Method relies on sklearn and pytorch. 
   If using multiple image dimensions per class, must use transforms.Resize((img_size, img_size)) or else the DataLoaders will return a error.
   Args:
@@ -56,6 +57,7 @@ def train_test_validation_split_with_equal_classes(dataset: torch.utils.data.Dat
       use_sampler (bool, optional): To directly use data_dict in DataLoaders or use SubRandomSampler. Defaults to False.
       pin_memory (bool, optional): Used when GPUs are used. Defaults to True.
       always_return_subsets (bool, optional): If the sampler is not used, to force the method to always return correct value
+      drop_last (bool, optional): If to drop the last elements of dataset in the dataloader. Defautls to True.
   Returns:
       Tuple(Dict[str, torch.utils.data.Subset], Dict[str, torch.utils.data.DataLoader]): 
       Returns dict of split subsets and dict of split dataloaders
@@ -106,6 +108,6 @@ def train_test_validation_split_with_equal_classes(dataset: torch.utils.data.Dat
     data_dict = dataset #Return the whole dataset in case of Sampler being used.
   from torch.utils.data import DataLoader
 
-  loader_dict = {x: DataLoader(data_dict[x] if not use_sampler else dataset, batch_size=batch_size, num_workers=num_workers, sampler=samplers[x] if use_sampler else None, shuffle=shuffle, pin_memory=pin_memory) for x in ['train', 'val', 'test']}
+  loader_dict = {x: DataLoader(data_dict[x] if not use_sampler else dataset, batch_size=batch_size, drop_last=drop_last, num_workers=num_workers, sampler=samplers[x] if use_sampler else None, shuffle=shuffle, pin_memory=pin_memory) for x in ['train', 'val', 'test']}
 
   return data_dict, loader_dict
